@@ -205,3 +205,17 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Ignore the central data folder and everything inside it
+data/
+
+# Ignore specific large data file types anywhere in the project
+*.csv
+*.xlsx
+*.xls
+*.dat
+*.db
+*.sqlite
+*.parquet
+*.json
