@@ -23,3 +23,7 @@ plt.plot(t, x, label="Noisy signal", alpha=0.5)
 plt.plot(t, x_smooth, label="Smoothed signal", linewidth=2)
 plt.legend()
 plt.show()
+
+
+
+#Fix

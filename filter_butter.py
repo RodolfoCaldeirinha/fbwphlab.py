@@ -31,3 +31,6 @@ def butter_filter(x, filtering_order = 2, cut_off = 15, filter_type = 'low'):
 # plt.legend()
 # plt.tight_layout()
 # plt.show()
+
+
+#Fix
