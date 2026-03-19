@@ -16,7 +16,6 @@ def butter_filter(x, filtering_order = 2, cut_off = 15, filter_type = 'low'):
     filtering_order = 2
     cut_off = 15
     filter_type = 'low'
-    x = convert_array("Master/Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/Axb.csv")
     t = np.linspace(t_begin, t_end, len(x))
     b, a = scipy.signal.butter(N=filtering_order, Wn=cut_off, btype=filter_type, fs=fs) #(order, cutoff frequency, filter type(low or hgih), sampling frequency)
 
