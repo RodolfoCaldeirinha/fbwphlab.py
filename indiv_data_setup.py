@@ -1,16 +1,16 @@
 import os 
 import zipfile
-from mega import Mega
+import urllib.request
 
 
 #Work in Progress
 #Supposed to be run when the data is needed locally to help keep the git usable
 def megashit():
     #Object"
-    mega_obj= Mega()
+   
 
     #URL
-    url= ""     #Input when data analysis is finsihed
+    url= "https://www.dropbox.com/scl/fi/offbbw8hdecn8rb4opmz2/CSV-data_processed.zip?rlkey=8lgp6iwqcixrsdbx7bu6kzfqh&st=2pqvwpr5&dl=1"     #Input when data analysis is finsihed
 
 
     #Directory Management
@@ -19,9 +19,11 @@ def megashit():
         return 
     if not os.path.exists("data"):
         os.makedirs("data")
-        zip_data= mega_obj.download_url(url)
-        print("Downloading from MEGA")
-        filename= str(zip_data)
+        
+
+        filename = "temp_data.zip" 
+        urllib.request.urlretrieve(url, filename)
+        print("Downloading from Dropbox since Mega is not the brightest")
         with zipfile.ZipFile(filename) as fn:
             print("Extracting data")
             fn.extractall("data")
