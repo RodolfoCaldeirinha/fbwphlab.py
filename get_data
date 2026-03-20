@@ -1,0 +1,18 @@
+import os
+import pandas as pd
+
+
+
+
+def data_grabber(flightnumber,interval,gettick):
+    
+    current_directory= os.path.dirname(os.path.abspath(__file__))       
+    #This first looks what the exact path to this script is and then ask the system what the name of the directory is
+
+    flighdata_directories=os.path.join(current_directory,"data","CSV_data_processed")
+
+    if os.path.exists(flighdata_directories)==False:
+        print("The directory could not be found")
+    else:
+        #Proceed with looking for specified file
+  
