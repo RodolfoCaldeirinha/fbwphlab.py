@@ -1,0 +1,35 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 1. Set your paths (Paste your actual paths here)
+path_aileron = r"C:\Users\jaspe\OneDrive - Delft University of Technology\Aerospace\Y2Q3\Project\data_toplevel\CSV Data\simlog-20250701_075259\data\aircraft\data\DeltaAil.csv"
+path_drum = r"C:\Users\jaspe\OneDrive - Delft University of Technology\Aerospace\Y2Q3\Project\data_toplevel\CSV Data\simlog-20250701_075259\data\aircraft\data\DeltaDrumAil.csv"
+# 2. Load the data
+# We use header=0 because the first row is usually the column name
+df_drum = pd.read_csv(path_drum)
+df_aileron = pd.read_csv(path_aileron)
+
+# Get the values as numpy arrays
+x = df_drum.iloc[:, 0].values    # Drum rotation
+y = df_aileron.iloc[:, 0].values # Aileron rotation
+
+# 3. Create a Scatter Plot
+plt.figure(figsize=(8, 6))
+plt.scatter(x, y, alpha=0.1, s=1) # alpha makes it easier to see density
+plt.xlabel("Drum Rotation [deg or rad]")
+plt.ylabel("Aileron Rotation [deg or rad]")
+plt.title("Relationship: Drum vs Aileron")
+plt.grid(True)
+
+# 4. Calculate the Linear Relationship (Gearing Ratio)
+# This fits a line: y = mx + c
+slope, intercept = np.polyfit(x, y, 1)
+print(f"Gearing Ratio (Slope): {slope:.4f}")
+print(f"Offset (Intercept): {intercept:.4f}")
+
+# Add the regression line to the plot
+plt.plot(x, slope*x + intercept, color='red', label=f'Ratio: {slope:.3f}')
+plt.legend()
+
+plt.show()
