@@ -23,6 +23,7 @@ def butter_filter(x, filtering_order = 2, cut_off = 15, filter_type = 'low'):
     return x_filtered
 
 
+
 # plt.figure(figsize=(10, 4))
 # plt.plot(t, x, alpha=0.5, label='Noisy signal')
 # plt.plot(t, x_filtered, linewidth=2, label='Filtered (filtfilt, 0 lag)')
