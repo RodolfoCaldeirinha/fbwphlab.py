@@ -1,18 +1,66 @@
 import os
 import pandas as pd
 
+#Inputs for this function should follow the following structure:
+# flightnumber : simlog-#Date-#Time
+# datatype: Choose your specific datatype, Example: "aircraft"
+# variable: Choose the specific datapoints you are looking for, Example: "AlphaBoom" or "AlphaBomm_subfile_1" if multiple instances exist.
+# gettick: Can be called as True or False to gather the relevant tick interval, Example: "False"
+#Note: A working example is quoted at the end.
 
 
 
-def data_grabber(flightnumber,interval,gettick):
+
+
+def data_grabber(flightnumber,datatype,variable,gettick):
     
     current_directory= os.path.dirname(os.path.abspath(__file__))       
     #This first looks what the exact path to this script is and then ask the system what the name of the directory is
 
-    flighdata_directories=os.path.join(current_directory,"data","CSV_data_processed")
+    flighdata_directories=os.path.join(current_directory,"data","CSV data_processed")
+    #Reconstruct universal path to the directory where individual flight directories are stored
+
 
     if os.path.exists(flighdata_directories)==False:
         print("The directory could not be found")
+        return None,None
     else:
         #Proceed with looking for specified file
-  
+        datatype_directories= os.path.join(flighdata_directories,flightnumber,"data",datatype)
+        if os.path.exists(datatype_directories)==False:
+            print("Invalid (datatype) variable or flight choosen, make sure the thing exists")
+            return None,None
+        else:
+            variable_file=os.path.join(datatype_directories,"data",(variable +".csv"))
+            filter="_subfile_"
+            
+            if os.path.exists(variable_file)==False:
+                print("Invalid (variable) variable")
+                return None, None
+            else:
+                data=pd.read_csv(variable_file)
+                if gettick==True:
+                    if filter in variable:
+                        pieces=variable.split(filter)
+                        tick_file=os.path.join(datatype_directories,("tick"+filter+str(pieces[1])+".csv"))
+                        if os.path.exists(tick_file)==False:
+                            print("Warning: Tick file could not be found!")
+                            ticks=None # Fails safely without crashing
+                        else:
+                            ticks=pd.read_csv(tick_file)
+                  
+                    else:
+                        tick_file=os.path.join(datatype_directories,"tick.csv")
+                        if os.path.exists(tick_file)==False:
+                            print("Warning: Tick file could not be found!")
+                            ticks=None # Fails safely without crashing
+                        else:
+                            ticks=pd.read_csv(tick_file)
+                else:
+                    ticks=None
+                return data,ticks
+
+            
+#a,b=data_grabber("simlog-20250701_075259","aircraft","Alpha",True)
+#print(a)
+#print(b)
