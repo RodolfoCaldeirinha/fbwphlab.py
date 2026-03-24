@@ -7,17 +7,25 @@ import matplotlib.pyplot as plt
 # ── 1. Generate synthetic data ────────────────────────────────────────────────
 # ODE:  J·θ̈  +  K·θ̇  +  A·θ  =  B·I(t)
 
+def convert_array(file):
+    with open(file, 'r') as f:
+        lines = [line.rstrip() for line in f]
+    array = []
+    for line in lines:
+        array.append(line)
+    array.pop(0)
+    array = [float(x) for x in array]
+    return array
 
-
-
-
-
+theta = convert_array("Theta_subfile_1.csv")
 
 TRUE = dict(J=5.0, K=0.3, A=8, B=1.2)
 
-dt  = 0.05
-t   = np.arange(0, 10, dt)
-I   = np.sin(2 * t) + 0.5 * np.cos(5 * t)   # forcing current
+#dt  = 0.05
+#t   = np.arange(0, 10, dt)
+#I   = np.sin(2 * t) + 0.5 * np.cos(5 * t)   # forcing current
+
+
 
 def ode(t_val, y):
     th, dth = y
@@ -26,7 +34,7 @@ def ode(t_val, y):
     return [dth, d2th]
 
 sol   = solve_ivp(ode, [t[0], t[-1]], [0.0, 0.0], t_eval=t, max_step=dt)
-theta = sol.y[0] + np.random.normal(0, 0.01, sol.y[0].shape)
+#theta = sol.y[0] + np.random.normal(0, 0.01, sol.y[0].shape)
 
 # ── 2. Numerical derivatives ──────────────────────────────────────────────────
 theta   = savgol_filter(theta, window_length=11, polyorder=3)
