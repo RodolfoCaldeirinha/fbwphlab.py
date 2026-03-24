@@ -33,3 +33,4 @@ plt.plot(x, slope*x + intercept, color='red', label=f'Ratio: {slope:.3f}')
 plt.legend()
 
 plt.show()
+#ratio is said to be 0.978
