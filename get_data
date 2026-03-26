@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 #Inputs for this function should follow the following structure:
-# flightnumber : simlog-#Date-#Time
+# flightnumber : simlog-#Date_#Time
 # datatype: Choose your specific datatype, Example: "aircraft"
 # variable: Choose the specific datapoints you are looking for, Example: "AlphaBoom" or "AlphaBomm_subfile_1" if multiple instances exist.
 # gettick: Can be called as True or False to gather the relevant tick interval, Example: "False"
