@@ -4,21 +4,30 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import savgol_filter
 
+from get_data import data_grabber
+
+
+
 # ============================================
 # 1. LOAD DATA
 # ============================================
 
 i = 1
+flight_name = "simlog-20260218_130000"
+data_type = "aircraft"
 
-time_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\tick_subfile_{i}.csv')
-input_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\IservoAil_subfile_{i}.csv')
-drum_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\DeltaDrumAil_subfile_{i}.csv')
-aileron_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\DeltaAil_subfile_{i}.csv')
-airspeed_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\VTrue_subfile_{i}.csv')
-pressure_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\StaticPres_subfile_{i}.csv')
-temperature_df = pd.read_csv(rf'C:\Users\pkosz\Desktop\TU Delft\Y2\TAS\fbwphlab.py\data\CSV data_processed\simlog-20260218_130000\data\aircraft\data\StaticTemp_subfile_{i}.csv')
+# Get the first variable AND the time (tick) array simultaneously
+input_df, time_df = data_grabber(flight_name, data_type, f"IservoAil_subfile_{i}", gettick=True)
 
+# For the rest, we only need the data (gettick=False), so we ignore the second output with '_'
+drum_df, _ = data_grabber(flight_name, data_type, f"DeltaDrumAil_subfile_{i}", gettick=False)
+aileron_df, _ = data_grabber(flight_name, data_type, f"DeltaAil_subfile_{i}", gettick=False)
+airspeed_df, _ = data_grabber(flight_name, data_type, f"VTrue_subfile_{i}", gettick=False)
+pressure_df, _ = data_grabber(flight_name, data_type, f"StaticPres_subfile_{i}", gettick=False)
+temperature_df, _ = data_grabber(flight_name, data_type, f"StaticTemp_subfile_{i}", gettick=False)
 
+if time_df is None or input_df is None:
+    raise FileNotFoundError("Data grabber failed to find the files. Your shit is wrong !")
 
 
 aileron_df -= np.mean(aileron_df[-100:])
