@@ -1,0 +1,152 @@
+import h5py
+import pandas as pd
+import numpy as np
+import os
+
+output_name = "CSV Data"
+
+# Directories
+current_dir = os.path.dirname(os.path.abspath(__file__))
+original_data = os.path.abspath(os.path.join(current_dir, "..", "data_toplevel", "data"))
+output_data = os.path.abspath(os.path.join(current_dir, "..", "data_toplevel", output_name))
+os.makedirs(output_data, exist_ok=True)
+
+def structured_to_dataframe(dataset):
+    """Convert structured HDF5 dataset into a flat pandas DataFrame."""
+    # structured dtype (named fields)
+    if getattr(dataset.dtype, "names", None) is not None:
+        data_dict = {}
+        for name in dataset.dtype.names:
+            field = dataset[name]
+            # if each field is itself an array per-row, expand it: name_0, name_1, ...
+            if getattr(field, "ndim", 0) > 1:
+                # expand second+ dims into separate columns
+                for i in range(field.shape[1]):
+                    data_dict[f"{name}_{i}"] = field[:, i]
+            else:
+                data_dict[name] = field
+        return pd.DataFrame(data_dict)
+
+    # not structured: numeric ndarray or scalar
+    if isinstance(dataset, np.ndarray):
+        if dataset.ndim == 0:
+            return pd.DataFrame([dataset], columns=["value"])
+        if dataset.ndim == 1:
+            return pd.DataFrame(dataset, columns=["value"])
+        if dataset.ndim == 2:
+            return pd.DataFrame(dataset, columns=[f"col{i}" for i in range(dataset.shape[1])])
+        # ndim > 2: flatten all but first dim
+        flat_shape = (dataset.shape[0], int(np.prod(dataset.shape[1:])))
+        flat_dataset = dataset.reshape(flat_shape)
+        return pd.DataFrame(flat_dataset, columns=[f"col{i}" for i in range(flat_dataset.shape[1])])
+
+    # fallback: try to coerce
+    return pd.DataFrame(dataset)
+
+def sanitize_dataframe_for_csv(df):
+    """
+    Ensure df columns are safe for to_csv:
+      - decode bytes to str
+      - keep numeric columns numeric
+      - convert any remaining object/non-numeric columns to strings
+    """
+    for col in df.columns:
+        col_dtype = df[col].dtype
+
+        # If it's bytes (np.bytes_) or contains bytes, decode
+        if col_dtype == object:
+            # detect bytes presence quickly (sample up to 100 elements)
+            sample = df[col].dropna().head(100)
+            has_bytes = any(isinstance(x, (bytes, bytearray)) for x in sample)
+            if has_bytes:
+                try:
+                    df[col] = df[col].apply(lambda x: x.decode("utf-8") if isinstance(x, (bytes, bytearray)) else x)
+                    col_dtype = df[col].dtype
+                except Exception:
+                    # decoding failed for some entries — convert to str below
+                    pass
+
+        # If now numeric, leave as-is
+        if pd.api.types.is_numeric_dtype(df[col].dtype):
+            continue
+
+        # If column is of dtype datetime-like, let pandas handle; else convert to string
+        if pd.api.types.is_datetime64_any_dtype(df[col].dtype):
+            continue
+
+        # Finally, convert any remaining non-numeric types to string to avoid np.isnan errors
+        if not pd.api.types.is_numeric_dtype(df[col].dtype):
+            df[col] = df[col].astype(str)
+
+    return df
+
+def save_datasets(h5obj, out_base_path, current_path=""):
+    """
+    Recursively saves all datasets in an HDF5 object, keeping folder structure.
+    """
+    for key in h5obj.keys():
+        item = h5obj[key]
+        new_path = os.path.join(current_path, key)
+
+        if isinstance(item, h5py.Dataset):
+            dataset = item[()]
+
+            # convert dataset -> DataFrame safely
+            try:
+                df = structured_to_dataframe(dataset)
+            except Exception as e:
+                print(f"Skipping dataset {new_path} — conversion to DataFrame failed: {e}")
+                print("  dtype:", getattr(dataset, "dtype", None))
+                print("  shape:", getattr(dataset, "shape", None))
+                continue  # skip this dataset rather than crash
+
+            # sanitize columns to be CSV-safe
+            try:
+                df = sanitize_dataframe_for_csv(df)
+            except Exception as e:
+                print(f"Skipping dataset {new_path} — sanitize failed: {e}")
+                continue
+
+            # Make folder path matching hierarchy
+            folder = os.path.join(out_base_path, current_path)  # if current_path=='' -> out_base_path
+            os.makedirs(folder, exist_ok=True)
+
+            # Save CSV
+            csv_file = os.path.join(folder, f"{key}.csv")
+            try:
+                df.to_csv(csv_file, index=False)
+                print(f"Saved: {csv_file} ({getattr(dataset,'shape',None)})")
+            except Exception as e:
+                print(f"Failed saving {new_path} to CSV: {e}")
+                # as fallback, save as numpy .npy so nothing is lost
+                try:
+                    npy_file = os.path.join(folder, f"{key}.npy")
+                    np.save(npy_file, dataset)
+                    print(f"Saved fallback .npy: {npy_file}")
+                except Exception as e2:
+                    print(f"Also failed to save fallback .npy for {new_path}: {e2}")
+
+        elif isinstance(item, h5py.Group):
+            # Recurse into the group
+            save_datasets(item, out_base_path, new_path)
+
+# Get all HDF5 files
+epstein_files = [x for x in os.listdir(original_data) if x.endswith(".hdf5")]
+if len(epstein_files) == 0:
+    print("You got no files bro")
+else:
+    # Process each HDF5 file
+    for f in epstein_files:
+        final_dir = os.path.join(original_data, f)
+        csv_name = os.path.splitext(f)[0]
+
+        # Folder for this HDF5 file
+        hdf5_folder = os.path.join(output_data, csv_name)
+        os.makedirs(hdf5_folder, exist_ok=True)
+
+        # Open and save datasets
+        with h5py.File(final_dir, "r") as x:
+            print(f"Processing file: {f} | Keys at root: {list(x.keys())}")
+            save_datasets(x, hdf5_folder)
+
+print("Finished")
