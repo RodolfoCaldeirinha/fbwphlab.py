@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from get_data import data_grabber
 from sklearn.linear_model import LinearRegression
 # As a reminder
 # ux = roll = aileron
@@ -11,10 +12,15 @@ def csv_to_numpy(file_path):
     data = df.to_numpy().flatten() # Ensure 1D array    
     return data
 
-ticks = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/tick_subfile_4.csv')
-ux = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/command/data/uxcmd_subfile_4.csv')
-Iail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/IservoAil_subfile_4.csv')
-delta_ail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/DeltaAil_subfile_4.csv')
+ux, ticks = data_grabber("simlog-20260218_130000","command","uxcmd_subfile_4", True)
+ux = ux.to_numpy().flatten()
+ticks = ticks.to_numpy().flatten()
+Iail = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False).to_numpy().flatten()
+delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False).to_numpy().flatten()
+#ticks = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/tick_subfile_4.csv')
+#ux = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/command/data/uxcmd_subfile_4.csv')
+#Iail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/IservoAil_subfile_4.csv')
+#delta_ail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/DeltaAil_subfile_4.csv')
 
 #print(len(ticks))
 #print(len(ux))
@@ -23,15 +29,6 @@ delta_ail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/
 #print(np.max(Iail))
 
 import numpy as np
-
-# 1. Create a normalized 'time' index for both datasets
-# This assumes both files cover the EXACT same duration (start to finish)
-#time_old = np.linspace(0, 1, len(delta_ail))
-#time_new = np.linspace(0, 1, len(ticks))
-
-# 2. Interpolate delta_ail to the new length
-# This 'stretches' the 54,202 points to fit 164,200 points
-#delta_ail_resampled = np.interp(time_new, time_old, delta_ail)
 
 def derivative(x, t):
     #if x is not np.ndarray:

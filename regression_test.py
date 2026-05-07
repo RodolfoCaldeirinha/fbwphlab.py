@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from get_data import data_grabber
 from filter_butter import butter_filter
 from signal_current_regression import fit_plane, derivative, remove_outliers
 
@@ -12,10 +13,9 @@ def csv_to_numpy(file_path):
     return data
 
 # Getting data
-ticks = csv_to_numpy(r"Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/tick_subfile_4.csv")
-ux = r"Master/data_toplevel/CSV data/simlog-20260218_130000/data/command/data/uxcmd_subfile_4.csv"
-current_aileron = r"Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/IservoAil_subfile_4.csv"
-delta_ail = r"Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/DeltaAil_subfile_4.csv"
+ux, ticks = data_grabber("simlog-20260218_130000","command","uxcmd_subfile_4", True)
+current_aileron = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False)
+delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False)
 
 # Filtering (commented out)
 ux_np = butter_filter(ux, 1000, ticks[0], ticks[-1], filter_type='low', filtering_order=2, cut_off=15)
