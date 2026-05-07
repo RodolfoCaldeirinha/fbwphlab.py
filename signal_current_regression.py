@@ -28,8 +28,6 @@ delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4
 #print(len(delta_ail))
 #print(np.max(Iail))
 
-import numpy as np
-
 def derivative(x, t):
     #if x is not np.ndarray:
     #    x = csv_to_numpy(x)

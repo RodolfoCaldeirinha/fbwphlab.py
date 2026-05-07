@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 from get_data import data_grabber
 from filter_butter import butter_filter
-from signal_current_regression import fit_plane, derivative, remove_outliers
+# from signal_current_regression import fit_plane, derivative, remove_outliers
 
+'''RELEVANT FUNCTIONS'''
 # CSV to numpy
 def csv_to_numpy(file_path):
     df = pd.read_csv(file_path)
@@ -12,6 +14,37 @@ def csv_to_numpy(file_path):
     data = df.to_numpy().flatten() # Ensure 1D array    
     return data
 
+# Derivative function
+def derivative(x, t):
+    #if x is not np.ndarray:
+    #    x = csv_to_numpy(x)
+    dt = np.diff(t)
+    dx = np.diff(x)
+    return dx/dt
+
+# Remove outliers function
+def remove_outliers(X, y, n):
+    """
+    Remove the top and bottom N outliers based on y values.
+    Returns filtered X and y with the same row alignment.
+    """
+    lower = np.partition(y, n)[n]           # nth smallest
+    upper = np.partition(y, -n - 1)[-n - 1] # nth largest
+    mask = (y >= lower) & (y <= upper)
+    return X[mask], y[mask]
+
+# Regression model
+def fit_plane(X, y, n_outliers):
+    # Remove outliers
+    X, y = remove_outliers(X, y, n_outliers)
+    
+    # Fit linear regression on polynomial features
+    model = LinearRegression()
+    model.fit(X, y)
+    
+    return model
+
+'''MAIN CODE: REGRESSION IN ACTION'''
 # Getting data
 ux, ticks = data_grabber("simlog-20260218_130000","command","uxcmd_subfile_4", True)
 current_aileron = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False)
