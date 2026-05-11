@@ -15,8 +15,11 @@ def csv_to_numpy(file_path):
 ux, ticks = data_grabber("simlog-20260218_130000","command","uxcmd_subfile_4", True)
 ux = ux.to_numpy().flatten()
 ticks = ticks.to_numpy().flatten()
-Iail = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False).to_numpy().flatten()
-delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False).to_numpy().flatten()
+Iail = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False)[0].to_numpy().flatten() # Rodolfo's Fix 4
+delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False)[0].to_numpy().flatten() # Rodolfo's Fix 5
+
+
+
 #ticks = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/tick_subfile_4.csv')
 #ux = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/command/data/uxcmd_subfile_4.csv')
 #Iail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/IservoAil_subfile_4.csv')

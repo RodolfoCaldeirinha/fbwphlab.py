@@ -50,6 +50,12 @@ ux, ticks = data_grabber("simlog-20260218_130000","command","uxcmd_subfile_4", T
 current_aileron = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False)
 delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False)
 
+#Rodolfo's Correction
+ux = ux.to_numpy().flatten()
+ticks = ticks.to_numpy().flatten()
+current_aileron = current_aileron[0].to_numpy().flatten()
+delta_ail = delta_ail[0].to_numpy().flatten()
+
 # Filtering (commented out)
 ux_np = butter_filter(ux, 1000, ticks[0], ticks[-1], filter_type='low', filtering_order=2, cut_off=15)
 current_aileron_np = butter_filter(current_aileron, 1000, ticks[0], ticks[-1], filter_type='low', filtering_order=2, cut_off=15)
@@ -63,7 +69,8 @@ ddeltadot_ail = derivative(delta_ail_np, ticks)
 # np.diff shortens by 1 — trim all arrays to match
 ux_np  = ux_np[:-1]
 ticks  = ticks[:-1]
-current_aileron_np = csv_to_numpy(current_aileron)[:-1]
+#Rodolfo's Fix
+current_aileron_np = current_aileron_np[:-1]
 
 X = np.column_stack((ux_np, ddeltadot_ail))
 
