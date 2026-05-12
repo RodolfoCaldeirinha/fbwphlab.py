@@ -12,8 +12,8 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 3
-flight_name = "simlog-20260218_130000"
+i = 2
+flight_name = "simlog-20250701_111742"
 data_type = "aircraft"
 
 # Get the first variable AND the time (tick) array simultaneously

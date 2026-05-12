@@ -12,7 +12,7 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 1
+i = 2
 flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
@@ -30,9 +30,9 @@ alpha_df, _ = data_grabber(flight_name, data_type, f"Alpha_subfile_{i}", gettick
 if time_df is None or input_df is None:
     raise FileNotFoundError("Data grabber failed to find the files. Your shit is wrong !")
 
-#aileron_df['value'] -= aileron_df['value'].tail(100).mean()
-#input_df['value'] -= input_df['value'].tail(100).mean()
-#drum_df['value'] -= drum_df['value'].tail(100).mean()
+aileron_df['value'] -= aileron_df['value'].tail(100).mean()
+input_df['value'] -= input_df['value'].tail(100).mean()
+drum_df['value'] -= drum_df['value'].tail(100).mean()
 
 
 time = time_df['value'].values
@@ -70,9 +70,9 @@ fixed = False
 delay = False
 detrended = True
 test = True
-window = False
+window = True
 start_idx_eval = 0
-end_idx_eval = len(time_seconds)
+end_idx_eval = 110000
 
 
 def actuator_with_linkage(t, x, u, params):
@@ -80,9 +80,11 @@ def actuator_with_linkage(t, x, u, params):
     current = u[0]
     q_val = u[1]
     alpha_val = u[2]
-    c_alpha = 0
 
     B_d = params['drum_friction']
+    rel0 = params['rel0']
+    c_alpha = 0
+
 
     if fixed:
         K_s = 3.1e1           # fixed link_stiffness
@@ -106,7 +108,7 @@ def actuator_with_linkage(t, x, u, params):
     current_eff = np.sign(current) * np.maximum(np.abs(current) - I_dead, 0.0)
     tau_m = torque_gain * current_eff
 
-    rel = theta_d - theta_a
+    rel = theta_d - theta_a - rel0
     rel_dot = theta_d_dot - theta_a_dot
 
     theta_d_ddot = (tau_m - K_s * rel - B_s * rel_dot - B_d * theta_d_dot) / J_d
@@ -121,8 +123,8 @@ def actuator_with_linkage(t, x, u, params):
 
 def measure_positions(t, x, u, params):
     return np.hstack([
-        x[0] + params['drum_bias'],
-        x[2] + params['aileron_bias']
+        x[0],
+        x[2]
     ])
 
 # --- Test the dynamics and measurement ---
@@ -130,7 +132,7 @@ sample_t = time_seconds[0]
 sample_x = np.array([0.0, 0.0, 0.0, 0.0])
 sample_u = np.array([input_command[0], q[0], alpha[0]])
 sample_params = {
-    'drum_bias': 0, 'aileron_bias': 0, 'J_drum': 0.01, 'J_aileron': 0.1, 'link_stiffness': 100.0,
+    'rel0': 0.0, 'J_drum': 0.01, 'J_aileron': 0.1, 'link_stiffness': 100.0,
     'link_damping': 1.0, 'drum_friction': 0.1, 'torque_gain': 1.0,
     'aero_stiffness': 0.05, 'aero_damping': 0.02
 }
@@ -175,15 +177,12 @@ data = arc.sysid.Timeseries(ts=time_seconds, us=us, ys=ys)
 
 if fixed:
     params_guess = {
-        'drum_bias': delta_drum[start_idx_eval],
-        'aileron_bias': delta_aileron[start_idx_eval],
         'drum_friction': 5e-02,
         }
 
 else:
     params_guess = {
-        'drum_bias': delta_drum[start_idx_eval],
-        'aileron_bias': delta_aileron[start_idx_eval],
+        'rel0': 0.0,
         'J_aileron': 3.1416e-02,
         'J_drum': 1.0455e-01,
         'aero_damping': 2.7328e-04,
@@ -211,9 +210,10 @@ if window:
     input_sub = input_command[start_idx:start_idx + N_sub]
     alpha_sub = alpha[start_idx:start_idx + N_sub]
 
+
 else:
-    start_time = 991.0
-    end_time = 995
+    start_time = 1060
+    end_time = 1070
 
     start_idx = np.searchsorted(time_seconds, start_time)
     end_idx = np.searchsorted(time_seconds, end_time)
@@ -229,11 +229,20 @@ else:
 if detrended:
     ys_sub[0, :] -= ys_sub[0, 0]
     ys_sub[1, :] -= ys_sub[1, 0]
-    input_sub = input_sub - input_sub[0]
-    alpha_sub = alpha_sub - alpha_sub[0]
 
 
+n_trim = 200  # or 100-300 samples before the event
+theta_d0 = np.mean(ys_sub[0, :n_trim])
+theta_a0 = np.mean(ys_sub[1, :n_trim])
+u0_trim  = np.mean(input_sub[:n_trim])
+a0_trim  = np.mean(alpha_sub[:n_trim])
 
+# keep outputs absolute
+# ys_sub stays unchanged
+
+# use perturbation inputs around local trim
+input_sub = input_sub - u0_trim
+alpha_sub = alpha_sub - a0_trim
 
 
 if delay:
@@ -253,70 +262,64 @@ data_sub = arc.sysid.Timeseries(ts=time_sub, us=us_sub, ys=ys_sub)
 if detrended:
     x0_guess = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
 else:
-    x0_guess = np.array([
-        ys_sub[0, 0],
-        0.0,
-        ys_sub[1, 0],
-        0.0
-        ], dtype=float)
+    x0_guess = np.array([theta_d0, 0.0, theta_a0, 0.0], dtype=float)
+                          
+
 
 
 options = {'max_nfev': 500, 'ftol': 1e-6, 'xtol': 1e-6}
 
 
+
+
+
 if fixed:
     lower_bounds = {
-        'drum_bias': -1e-1,
-        'aileron_bias': -1e-1,
         'drum_friction': 0,
         }
 
     upper_bounds = {
-        'drum_bias': 1e-1,
-        'aileron_bias': 1e-1,
         'drum_friction': 1e-0,
         }
 
-    bounds = (lower_bounds, upper_bounds)
+    
 
 else:
     lower_bounds = {
-        'drum_bias': -1e-2,
-        'aileron_bias': -1e-2,
-        'J_aileron': 5e-3,
-        'J_drum': 1e-2,
-        'aero_damping': 1e-5,
-        'aero_stiffness': 1e-4,
-        'drum_friction': 0.0,
-        'link_damping': 0.1,
-        'link_stiffness': 5.0,
-        'torque_gain': 1e-2,
-        }
+        'rel0': -1e-2,
+        'J_aileron': 2e-2,
+        'J_drum': 2e-2,
+        'aero_damping': 1e-4,
+        'aero_stiffness': 1e-3,
+        'drum_friction': 1e-2,
+        'link_damping': 5e-1,
+        'link_stiffness': 1.5e1,
+        'torque_gain': 2e-1,
+    }
 
     upper_bounds = {
-        'drum_bias': 1e-2,
-        'aileron_bias': 1e-2,
+        'rel0': 1e-2,
         'J_aileron': 2e-1,
-        'J_drum': 5e-1,
-        'aero_damping': 5e-3,
-        'aero_stiffness': 2e-2,
+        'J_drum': 2e-1,
+        'aero_damping': 1e-3,
+        'aero_stiffness': 1e-2,
         'drum_friction': 1.0,
-        'link_damping': 10.0,
-        'link_stiffness': 200.0,
-        'torque_gain': 5.0,
-        }
+        'link_damping': 5.0,
+        'link_stiffness': 8e1,
+        'torque_gain': 1.5, 
+    }
 
-    bounds = (lower_bounds, upper_bounds)
-
-
-
+    
+bounds = (lower_bounds, upper_bounds)
 result = arc.sysid.pem(ekf,
-                       data_sub, params_guess, 
-                       x0=x0_guess, 
-                       estimate_x0=False, 
-                       options=options, 
-                       bounds=bounds
-                       )
+                    data_sub, params_guess, 
+                    x0=x0_guess, 
+                    estimate_x0=False, 
+                    options=options, 
+                    bounds=bounds
+                    )
+
+
 
 params_test = dict(result.p)
 
@@ -424,9 +427,9 @@ if test:
     ax1.legend()
     ax1.grid(True)
 
-    ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured aileron (fit window)')
-    ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated aileron')
-    ax2.set_ylabel('Aileron position (rad)')
+    ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured elevator (fit window)')
+    ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated elevator')
+    ax2.set_ylabel('Elevator position (rad)')
     ax2.set_xlabel('Time (s)')
     ax2.legend()
     ax2.grid(True)
@@ -443,9 +446,9 @@ else:
     ax1.legend()
     ax1.grid(True)
 
-    ax2.plot(time_seconds, delta_aileron, 'b-', label='Measured aileron')
-    ax2.plot(time_seconds, outputs_sim[1], 'r--', label='Simulated aileron')
-    ax2.set_ylabel('Aileron position (rad)')
+    ax2.plot(time_seconds, delta_aileron, 'b-', label='Measured elevator')
+    ax2.plot(time_seconds, outputs_sim[1], 'r--', label='Simulated elevator')
+    ax2.set_ylabel('Elevator position (rad)')
     ax2.set_xlabel('Time (s)')
     ax2.legend()
     ax2.grid(True)
@@ -563,9 +566,9 @@ def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, make_
 
     print("\n=== Full-dataset validation using test-set parameters ===")
     print(f"Raw full fit - drum:    {fit_drum_raw:.1f}%")
-    print(f"Raw full fit - aileron: {fit_ail_raw:.1f}%")
+    print(f"Raw full fit - elevator: {fit_ail_raw:.1f}%")
     print(f"Detrended full fit - drum:    {fit_drum_detr:.1f}%")
-    print(f"Detrended full fit - aileron: {fit_ail_detr:.1f}%")
+    print(f"Detrended full fit - elevator: {fit_ail_detr:.1f}%")
 
     if make_plots:
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
@@ -575,9 +578,9 @@ def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, make_
         ax1.legend()
         ax1.grid(True)
 
-        ax2.plot(time_eval, ys_full[1], 'b-', label='Measured aileron')
-        ax2.plot(time_eval, outputs_full[1], 'r--', label='Simulated aileron')
-        ax2.set_ylabel('Aileron position (rad)')
+        ax2.plot(time_eval, ys_full[1], 'b-', label='Measured elevator')
+        ax2.plot(time_eval, outputs_full[1], 'r--', label='Simulated elevator')
+        ax2.set_ylabel('Elevator position (rad)')
         ax2.set_xlabel('Time (s)')
         ax2.legend()
         ax2.grid(True)
@@ -591,9 +594,9 @@ def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, make_
         ax3.legend()
         ax3.grid(True)
 
-        ax4.plot(time_eval, ys_full_detr[1], 'b-', label='Measured aileron (detrended)')
-        ax4.plot(time_eval, outputs_full_detr[1], 'r--', label='Simulated aileron (detrended)')
-        ax4.set_ylabel('Aileron position (rad)')
+        ax4.plot(time_eval, ys_full_detr[1], 'b-', label='Measured elevator (detrended)')
+        ax4.plot(time_eval, outputs_full_detr[1], 'r--', label='Simulated elevator (detrended)')
+        ax4.set_ylabel('Elevator position (rad)')
         ax4.set_xlabel('Time (s)')
         ax4.legend()
         ax4.grid(True)
