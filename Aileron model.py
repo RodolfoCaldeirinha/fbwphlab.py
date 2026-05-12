@@ -12,7 +12,7 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 1
+i = 3
 flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
@@ -248,7 +248,7 @@ if fixed:
     upper_bounds = {
         'drum_bias': 1e-1,
         'aileron_bias': 1e-1,
-        'drum_friction': 1e-0,
+        'drum_friction': 1.5e-0,
         }
 
     bounds = (lower_bounds, upper_bounds)
@@ -274,7 +274,7 @@ else:
         'J_drum': 1,
         'aero_damping': 3e-03,
         'aero_stiffness': 2e-02,
-        'drum_friction': 1e-0,
+        'drum_friction': 1.4e-0,
         'link_damping': 3e0,
         'link_stiffness': 5e01,
         'torque_gain': 1e0,
