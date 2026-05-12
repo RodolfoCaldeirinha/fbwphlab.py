@@ -18,22 +18,12 @@ ticks = ticks.to_numpy().flatten()
 Iail = data_grabber("simlog-20260218_130000","aircraft","IservoAil_subfile_4", False)[0].to_numpy().flatten() # Rodolfo's Fix 4
 delta_ail = data_grabber("simlog-20260218_130000","aircraft","DeltaAil_subfile_4", False)[0].to_numpy().flatten() # Rodolfo's Fix 5
 
-
-
 #ticks = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/tick_subfile_4.csv')
 #ux = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/command/data/uxcmd_subfile_4.csv')
 #Iail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/IservoAil_subfile_4.csv')
 #delta_ail = csv_to_numpy(r'Master/data_toplevel/CSV data/simlog-20260218_130000/data/aircraft/data/DeltaAil_subfile_4.csv')
 
-#print(len(ticks))
-#print(len(ux))
-#print(len(Iail))
-#print(len(delta_ail))
-#print(np.max(Iail))
-
 def derivative(x, t):
-    #if x is not np.ndarray:
-    #    x = csv_to_numpy(x)
     dt = np.diff(t)
     dx = np.diff(x)
     return dx/dt
@@ -44,10 +34,6 @@ ddeltadot_ail = derivative(delta_ail, ticks)
 ux    = ux[:-1]     # trim to n-1
 Iail  = Iail[:-1]   # trim to n-1
 ticks = ticks[:-1]  # trim to n-1
-
-#print(len(ddeltadot_ail))
-#print(np.max(ux))
-#print(np.min(Iail))
 
 # Vector of data
 X = np.column_stack((ux, ddeltadot_ail))

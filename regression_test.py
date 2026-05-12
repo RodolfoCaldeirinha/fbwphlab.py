@@ -16,8 +16,6 @@ def csv_to_numpy(file_path):
 
 # Derivative function
 def derivative(x, t):
-    #if x is not np.ndarray:
-    #    x = csv_to_numpy(x)
     dt = np.diff(t)
     dx = np.diff(x)
     return dx/dt
