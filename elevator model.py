@@ -12,7 +12,7 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 2
+i = 3
 flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
@@ -45,7 +45,7 @@ pressure = pressure_df['value'].values
 temperature = temperature_df['value'].values
 temperature = temperature.copy()
 temperature += 273.15
-alpha = alpha_df['value'].values
+alpha = alpha_df['value'].values.copy()
 
 
 input_command = savgol_filter(input_df['value'].values, window_length=101, polyorder=2)
@@ -63,6 +63,29 @@ R_air = 287.05
 rho = pressure / (R_air * temperature)   # density [kg/m³]
 q = 0.5 * rho * airspeed**2              # dynamic pressure [Pa]
 
+# ===========================================
+# CENTERING THE DATA AROUND ZERO
+# ===========================================
+
+n_trim = 200   # first 200 samples of the fit window, adjust if needed
+
+# raw windowed signals
+
+
+# trim values from quiet pre-maneuver part
+drum_trim = np.mean(delta_drum[:n_trim])
+elev_trim = np.mean(delta_aileron[:n_trim])
+input_trim = np.mean(input_command[:n_trim])
+alpha_trim = np.mean(alpha[:n_trim])
+
+# centered signals
+delta_drum -= drum_trim
+delta_aileron -= elev_trim
+input_command -= input_trim
+alpha -= alpha_trim
+
+
+
 # ============================================
 # 3. DEFINE DYNAMICS (4 states)
 # ============================================
@@ -72,7 +95,7 @@ detrended = True
 test = True
 window = True
 start_idx_eval = 0
-end_idx_eval = 110000
+end_idx_eval = 56000
 
 
 def actuator_with_linkage(t, x, u, params):
@@ -182,7 +205,7 @@ if fixed:
 
 else:
     params_guess = {
-        'rel0': 0.0,
+        'rel0': 0.025,
         'J_aileron': 3.1416e-02,
         'J_drum': 1.0455e-01,
         'aero_damping': 2.7328e-04,
@@ -286,19 +309,19 @@ if fixed:
 
 else:
     lower_bounds = {
-        'rel0': -1e-2,
-        'J_aileron': 2e-2,
+        'rel0': -5e-1,
+        'J_aileron': 2e-1,
         'J_drum': 2e-2,
         'aero_damping': 1e-4,
         'aero_stiffness': 1e-3,
         'drum_friction': 1e-2,
         'link_damping': 5e-1,
         'link_stiffness': 1.5e1,
-        'torque_gain': 2e-1,
+        'torque_gain': 2e-2,
     }
 
     upper_bounds = {
-        'rel0': 1e-2,
+        'rel0': 5e-1,
         'J_aileron': 2e-1,
         'J_drum': 2e-1,
         'aero_damping': 1e-3,
@@ -309,7 +332,7 @@ else:
         'torque_gain': 1.5, 
     }
 
-    
+
 bounds = (lower_bounds, upper_bounds)
 result = arc.sysid.pem(ekf,
                     data_sub, params_guess, 

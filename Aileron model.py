@@ -12,8 +12,8 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 2
-flight_name = "simlog-20250701_111742"
+i = 1
+flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
 # Get the first variable AND the time (tick) array simultaneously
@@ -67,7 +67,7 @@ q = 0.5 * rho * airspeed**2              # dynamic pressure [Pa]
 # ============================================
 # 3. DEFINE DYNAMICS (4 states)
 # ============================================
-fixed = True
+fixed = False
 delay = False
 detrended = True
 test = True
