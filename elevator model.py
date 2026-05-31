@@ -12,7 +12,7 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 3
+i = 4
 flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
@@ -95,7 +95,7 @@ detrended = True
 test = True
 window = True
 start_idx_eval = 0
-end_idx_eval = 56000
+end_idx_eval = 106000
 
 
 def actuator_with_linkage(t, x, u, params):
@@ -310,7 +310,7 @@ if fixed:
 else:
     lower_bounds = {
         'rel0': -5e-1,
-        'J_aileron': 2e-1,
+        'J_aileron': 2e-3,
         'J_drum': 2e-2,
         'aero_damping': 1e-4,
         'aero_stiffness': 1e-3,
