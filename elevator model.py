@@ -12,8 +12,8 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 4
-flight_name = "simlog-20260218_130000"
+i = 1
+flight_name = "simlog-20250701_111742"
 data_type = "aircraft"
 
 # Get the first variable AND the time (tick) array simultaneously
@@ -84,18 +84,31 @@ delta_aileron -= elev_trim
 input_command -= input_trim
 alpha -= alpha_trim
 
-
+print("u0_fit =", input_command[0], q[0], alpha[0])
 
 # ============================================
 # 3. DEFINE DYNAMICS (4 states)
 # ============================================
-fixed = False
+fixed = True
 delay = False
 detrended = True
 test = True
 window = True
+verify = True
 start_idx_eval = 0
-end_idx_eval = 106000
+end_idx_eval = 104000
+
+
+fixed_params = {
+    'J_aileron': 9.70e-02,
+    'J_drum': 1.88e-03,
+    'aero_damping': 4.50e-04,
+    'aero_stiffness': 5.20e-03,
+    'drum_friction': 3.70e-01,
+    'link_damping': 4.40e+00,
+    'link_stiffness': 3.30e+01,
+    'torque_gain': 6.75e-01,
+}
 
 
 def actuator_with_linkage(t, x, u, params):
@@ -104,19 +117,20 @@ def actuator_with_linkage(t, x, u, params):
     q_val = u[1]
     alpha_val = u[2]
 
-    B_d = params['drum_friction']
-    rel0 = params['rel0']
-    c_alpha = 0
 
+    rel0 = 0
+    c_alpha = 0
+    gamma = 1
 
     if fixed:
-        K_s = 3.1e1           # fixed link_stiffness
-        torque_gain = 7.9e-1  # fixed torque_gain
-        K_a = 3.3e-3 * q_val  # fixed aero_stiffness
-        B_a = 3.4e-4 * q_val  # fixed aero_damping
-        J_a = 4.7e-2          # fixed J_aileron
-        J_d = 8.9e-2          # fixed J_drum
-        B_s = 1.5e0           # fixed link_damping 
+        J_a = 9.59e-02
+        B_a   = 4.44e-04 * q_val
+        K_a = 5.17e-03 * q_val
+        B_s   = 4.38e+00
+        K_s = 3.30e+01
+        torque_gain    = 6.75e-01
+        J_d = 1.88e-03
+        B_d = 3.70e-01
     else:
         K_s = params['link_stiffness']
         torque_gain = params['torque_gain']
@@ -125,13 +139,14 @@ def actuator_with_linkage(t, x, u, params):
         J_a = params['J_aileron']
         J_d = params['J_drum']
         B_s = params['link_damping']
+        B_d = params['drum_friction']
 
 
-    I_dead = 0.02
+    I_dead = 0.08
     current_eff = np.sign(current) * np.maximum(np.abs(current) - I_dead, 0.0)
     tau_m = torque_gain * current_eff
 
-    rel = theta_d - theta_a - rel0
+    rel = theta_d - theta_a * gamma - rel0
     rel_dot = theta_d_dot - theta_a_dot
 
     theta_d_ddot = (tau_m - K_s * rel - B_s * rel_dot - B_d * theta_d_dot) / J_d
@@ -155,7 +170,7 @@ sample_t = time_seconds[0]
 sample_x = np.array([0.0, 0.0, 0.0, 0.0])
 sample_u = np.array([input_command[0], q[0], alpha[0]])
 sample_params = {
-    'rel0': 0.0, 'J_drum': 0.01, 'J_aileron': 0.1, 'link_stiffness': 100.0,
+    'J_drum': 0.01, 'J_aileron': 0.1, 'link_stiffness': 100.0,
     'link_damping': 1.0, 'drum_friction': 0.1, 'torque_gain': 1.0,
     'aero_stiffness': 0.05, 'aero_damping': 0.02
 }
@@ -200,21 +215,19 @@ data = arc.sysid.Timeseries(ts=time_seconds, us=us, ys=ys)
 
 if fixed:
     params_guess = {
-        'drum_friction': 5e-02,
         }
 
 else:
     params_guess = {
-        'rel0': 0.025,
-        'J_aileron': 3.1416e-02,
-        'J_drum': 1.0455e-01,
-        'aero_damping': 2.7328e-04,
-        'aero_stiffness': 2.9755e-03,
-        'drum_friction': 5e-02,
-        'link_damping': 2.1163e+00,
-        'link_stiffness': 3.9388e+01,
-        'torque_gain': 7.7989e-01,
-        }
+            'J_aileron': 5.3369e-02,
+            'J_drum': 3.1532e-02,
+            'aero_damping': 4.6338e-04,
+            'aero_stiffness': 5.2916e-03,
+            'drum_friction': 1.0003e-02,
+            'link_damping': 3.2028e+00,
+            'link_stiffness': 4.4195e+01,
+            'torque_gain': 6.2709e-01
+            }
 
 
 
@@ -222,9 +235,9 @@ else:
 # 8. RUN THE IDENTIFICATION
 # ============================================
 if window:
-    activity = np.abs(np.gradient(delta_drum)) + np.abs(np.gradient(delta_aileron))
+    activity = np.abs(np.gradient(input_command))
     event_idx = np.argmax(activity)
-    start_idx = max(0, event_idx - 1000)
+    start_idx = max(0, event_idx - 300)
     N_sub = 2000
 
     time_sub = time[start_idx:start_idx + N_sub]
@@ -298,53 +311,88 @@ options = {'max_nfev': 500, 'ftol': 1e-6, 'xtol': 1e-6}
 
 if fixed:
     lower_bounds = {
-        'drum_friction': 0,
         }
 
     upper_bounds = {
-        'drum_friction': 1e-0,
         }
 
     
 
 else:
     lower_bounds = {
-        'rel0': -5e-1,
-        'J_aileron': 2e-3,
-        'J_drum': 2e-2,
+        'J_aileron': 9e-4,
+        'J_drum': 2e-3,
         'aero_damping': 1e-4,
         'aero_stiffness': 1e-3,
-        'drum_friction': 1e-2,
+        'drum_friction': 1e-3,
         'link_damping': 5e-1,
         'link_stiffness': 1.5e1,
         'torque_gain': 2e-2,
     }
 
     upper_bounds = {
-        'rel0': 5e-1,
         'J_aileron': 2e-1,
         'J_drum': 2e-1,
         'aero_damping': 1e-3,
         'aero_stiffness': 1e-2,
-        'drum_friction': 1.0,
+        'drum_friction': 5e-1,
         'link_damping': 5.0,
         'link_stiffness': 8e1,
-        'torque_gain': 1.5, 
+        'torque_gain': 1.5,
     }
 
 
 bounds = (lower_bounds, upper_bounds)
-result = arc.sysid.pem(ekf,
-                    data_sub, params_guess, 
-                    x0=x0_guess, 
-                    estimate_x0=False, 
-                    options=options, 
-                    bounds=bounds
-                    )
 
 
 
-params_test = dict(result.p)
+def extract_x0_from_result(result, fallback_x0):
+    # Try the most likely attribute names safely
+    for attr in ['x0', 'x']:
+        if hasattr(result, attr):
+            val = getattr(result, attr)
+            try:
+                arr = np.array(val, dtype=float).reshape(-1)
+                if arr.size == 4:
+                    return arr
+            except Exception:
+                pass
+    return np.array(fallback_x0, dtype=float).copy()
+
+
+if verify:
+    # No free parameters: only estimate x0
+    params_guess = {}
+    params_test = fixed_params.copy()
+
+    result = arc.sysid.pem(
+        ekf,
+        data_sub,
+        params_guess,
+        x0=x0_guess,
+        estimate_x0=True,
+        options=options,
+    )
+
+    x0_est = extract_x0_from_result(result, x0_guess)
+    print("Estimated x0 from verify mode:", x0_est)
+
+else:
+    # Normal parameter estimation
+    result = arc.sysid.pem(
+        ekf,
+        data_sub,
+        params_guess,
+        x0=x0_guess,
+        estimate_x0=False,
+        options=options,
+        bounds=bounds
+    )
+
+    params_test = dict(result.p)
+    x0_est = np.array(x0_guess, dtype=float).copy()
+
+
 
 
 print("x0_guess =", x0_guess)
@@ -541,22 +589,25 @@ def fit_percent(y, yhat):
 
 
 
-def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, make_plots=True):
+def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, x0_eval=None, make_plots=True):
     # Full measured outputs
     ys_full = np.vstack([delta_drum, delta_aileron])
 
 
 
-    # Better than starting from zero for full-data validation
-    if detrended:
-        x0_full = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+    # Initial condition for full-data validation
+    if x0_eval is not None:
+        x0_full = np.array(x0_eval, dtype=float).copy()
     else:
-        x0_full = np.array([
-            delta_drum[start_idx],
-            0.0,
-            delta_aileron[start_idx],
-            0.0
-        ], dtype=float)
+        if detrended:
+            x0_full = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+        else:
+            x0_full = np.array([
+                delta_drum[start_idx],
+                0.0,
+                delta_aileron[start_idx],
+                0.0
+            ], dtype=float)
 
     # Simulate full dataset with fixed params
     # Use the same input convention as in training
@@ -665,6 +716,10 @@ def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, make_
     }
 
 full_evaluation_results = evaluate_params_on_full_dataset(
-    params_test, start_idx_eval, end_idx_eval, detrended, make_plots=True
+    params_test,
+    start_idx_eval,
+    end_idx_eval,
+    detrended,
+    x0_eval=x0_est,
+    make_plots=True
 )
-
