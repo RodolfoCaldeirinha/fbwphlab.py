@@ -12,8 +12,8 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 1
-flight_name = "simlog-20260218_130000"
+i = 4
+flight_name = "simlog-20250701_105837"
 data_type = "aircraft"
 
 # Get the first variable AND the time (tick) array simultaneously
@@ -67,7 +67,7 @@ q = 0.5 * rho * airspeed**2              # dynamic pressure [Pa]
 # ============================================
 # 3. DEFINE DYNAMICS (4 states)
 # ============================================
-fixed = False
+fixed = True
 delay = False
 detrended = True
 test = True
@@ -101,7 +101,7 @@ def actuator_with_linkage(t, x, u, params):
         B_s = params['link_damping']
 
 
-    I_dead = 0.02
+    I_dead = 0.08
     current_eff = np.sign(current) * np.maximum(np.abs(current) - I_dead, 0.0)
     tau_m = -torque_gain * current_eff
 
@@ -176,7 +176,7 @@ if fixed:
     params_guess = {
         'drum_bias': delta_drum[start_idx_eval],
         'aileron_bias': delta_aileron[start_idx_eval],
-        'drum_friction': 5e-02,
+        'drum_friction': 1e-1,
         }
 
 else:
@@ -242,13 +242,13 @@ if fixed:
     lower_bounds = {
         'drum_bias': -1e-1,
         'aileron_bias': -1e-1,
-        'drum_friction': 0,
+        'drum_friction': 1e-1,
         }
 
     upper_bounds = {
         'drum_bias': 1e-1,
-        'aileron_bias': 1e-1,
-        'drum_friction': 1.5e-0,
+        'aileron_bias': 3e-1,
+        'drum_friction': 3e-1,
         }
 
     bounds = (lower_bounds, upper_bounds)

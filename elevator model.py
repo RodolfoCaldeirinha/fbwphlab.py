@@ -12,8 +12,8 @@ from get_data import data_grabber
 # 1. LOAD DATA
 # ============================================
 
-i = 1
-flight_name = "simlog-20250701_111742"
+i = 2
+flight_name = "simlog-20260218_130000"
 data_type = "aircraft"
 
 # Get the first variable AND the time (tick) array simultaneously
@@ -123,14 +123,14 @@ def actuator_with_linkage(t, x, u, params):
     gamma = 1
 
     if fixed:
-        J_a = 9.59e-02
-        B_a   = 4.44e-04 * q_val
-        K_a = 5.17e-03 * q_val
-        B_s   = 4.38e+00
-        K_s = 3.30e+01
-        torque_gain    = 6.75e-01
-        J_d = 1.88e-03
-        B_d = 3.70e-01
+        J_a = 9.59e-02              # J_aileron
+        B_a   = 4.44e-04 * q_val    # aero_damping
+        K_a = 5.17e-03 * q_val      # aero_stiffness
+        B_s   = 4.38e+00            # link_damping
+        K_s = 3.30e+01              # link_stiffness
+        torque_gain = 6.75e-01      # torque_gain
+        J_d = 1.88e-03              # J_drum
+        B_d = 3.70e-01              # drum_friction
     else:
         K_s = params['link_stiffness']
         torque_gain = params['torque_gain']
