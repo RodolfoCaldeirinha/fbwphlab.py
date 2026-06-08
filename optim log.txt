@@ -1,0 +1,266 @@
+i = 1
+=== Estimated Parameters ===
+J_aileron: 3.1697e-02
+J_drum: 5.8467e-02
+aero_damping: 1.9890e-04
+aero_stiffness: 3.4127e-03
+aileron_bias: -5.2123e-05
+drum_bias: 1.0531e-04
+drum_friction: 5.8316e-01
+link_damping: 7.7761e-01
+link_stiffness: 2.9821e+01
+torque_gain: 8.2310e-01
+
+
+i = 3
+=== Estimated Parameters ===
+J_aileron: 2.2450e-02
+J_drum: 1.0224e-01
+aero_damping: 3.6766e-04
+aero_stiffness: 3.3644e-03
+aileron_bias: -1.0692e-05
+drum_bias: -8.5572e-05
+drum_friction: 2.5427e-01
+link_damping: 1.3629e+00
+link_stiffness: 3.1914e+01
+torque_gain: 7.8102e-01
+
+
+i = 4
+=== Estimated Parameters ===
+J_aileron: 4.3090e-02
+J_drum: 9.0637e-02
+aero_damping: 3.4292e-04
+aero_stiffness: 3.2357e-03
+aileron_bias: 4.1663e-05
+drum_bias: -8.8883e-05
+drum_friction: 2.7303e-01
+link_damping: 1.3931e+00
+link_stiffness: 3.1086e+01
+torque_gain: 7.8462e-01
+
+
+i = 5
+=== Estimated Parameters ===
+J_aileron: 1.0001e-02
+J_drum: 2.1580e-01
+aero_damping: 4.3809e-04
+aero_stiffness: 3.1999e-03
+aileron_bias: -2.5078e-04
+drum_bias: -3.6241e-05
+drum_friction: 3.3463e-01
+link_damping: 2.8208e+00
+link_stiffness: 2.7267e+01
+torque_gain: 7.1304e-01
+
+
+i = 2
+=== Estimated Parameters ===
+J_aileron: 4.3886e-02
+J_drum: 1.2033e-01
+aero_damping: 2.8211e-04
+aero_stiffness: 2.4467e-03
+aileron_bias: -2.2324e-04
+drum_bias: -5.7860e-03
+drum_friction: 1.8745e-01
+link_damping: 2.5645e+00
+link_stiffness: 3.1878e+01
+torque_gain: 1.0000e+00
+
+
+
+# after fixing:
+    - aero params
+    - torque gain
+    - link stiffness
+
+i = 1
+J_aileron: 4.7135e-02
+J_drum: 5.3942e-02
+aileron_bias: 9.7219e-05
+drum_bias: -1.9990e-04
+drum_friction: 1.0835e-01
+link_damping: 2.1362e+00
+
+i = 3
+J_aileron: 1.5212e-02
+J_drum: 9.9944e-02
+aileron_bias: 1.4652e-05
+drum_bias: -2.1594e-04
+drum_friction: 4.2665e-01
+link_damping: 1.1776e+00
+
+i = 4
+J_aileron: 5.3350e-02
+J_drum: 8.8497e-02
+aileron_bias: 8.6935e-05
+drum_bias: -1.0131e-04
+drum_friction: 2.6443e-01
+link_damping: 1.4790e+00
+
+i = 5
+J_aileron: 1.0001e-02
+J_drum: 2.1526e-01
+aileron_bias: -5.0908e-04
+drum_bias: 1.8132e-05
+drum_friction: 6.6628e-01
+link_damping: 2.3385e+00
+
+
+
+# after also fixing:
+    - J aileron and J drum
+
+i = 1
+aileron_bias: 1.1218e-04
+drum_bias: -1.9007e-04
+drum_friction: 1.4869e-01
+link_damping: 1.8711e+00
+
+i = 3
+aileron_bias: 2.0174e-05
+drum_bias: -2.3306e-04
+drum_friction: 4.2344e-01
+link_damping: 1.2010e+00
+
+i = 4
+aileron_bias: 8.8650e-05
+drum_bias: -1.0200e-04
+drum_friction: 2.6580e-01
+link_damping: 1.4699e+00
+
+i = 5
+aileron_bias: -6.3702e-04
+drum_bias: 4.5047e-06
+drum_friction: 9.9371e-01
+link_damping: 2.8724e+00
+
+
+# after fixing:
+    - link damping too
+
+i = 1
+aileron_bias: 1.2832e-04
+drum_bias: -2.1065e-04
+drum_friction: 1.9497e-01
+
+i = 3
+aileron_bias: -3.6825e-05
+drum_bias: -1.9541e-04
+drum_friction: 3.9371e-01
+
+i = 4
+aileron_bias: 8.4652e-05
+drum_bias: -9.9420e-05
+drum_friction: 2.6220e-01
+
+i = 5
+aileron_bias: -6.1220e-04
+drum_bias: -3.0867e-05
+drum_friction: 1.0000e+00
+
+
+
+fitlog:
+
+Aileron
+
+simlog-20260218_130000
+    i = 1
+    Raw full fit - drum:    64.6%
+    Raw full fit - aileron: 66.7%
+
+    i = 3
+    Raw full fit - drum:    41.6%
+    Raw full fit - aileron: 41.9%
+
+    i = 4
+    Raw full fit - drum:    74.8%
+    Raw full fit - aileron: 68.2%
+
+    i = 5
+    Raw full fit - drum:    69.4%
+    Raw full fit - aileron: 67.7%
+
+simlog-20250701_111742
+
+    i = 1
+    Raw full fit - drum:    61.4%
+    Raw full fit - aileron: 55.5%
+
+
+simlog-20250701_105837
+    i = 4
+    Raw full fit - drum:    69.8%
+    Raw full fit - aileron: 67.3%
+
+
+Elevator
+
+simlog-20250701_105837
+    i = 4
+    Raw full fit - drum:    58.9%
+    Raw full fit - elevator: 61.4%
+
+simlog-20250701_111742
+    i = 1:
+    Raw full fit - drum:    22.4%
+    Raw full fit - elevator: 33.8%
+
+simlog-20260218_130000
+    i = 2:
+    Raw full fit - drum:    65.1%
+    Raw full fit - elevator: 45.6%
+
+
+
+
+Good datasets for elevator:
+
+simlog-20250701_105837
+    i = 4:
+
+    J_aileron: 9.8241e-02
+    J_drum: 2.0005e-03
+    aero_damping: 4.4353e-04
+    aero_stiffness: 5.1538e-03
+    drum_friction: 3.2785e-01
+    link_damping: 4.4902e+00
+    link_stiffness: 3.2917e+01
+    torque_gain: 6.7455e-01
+
+    after fix:
+        J_drum: 1.8938e-03
+        drum_friction: 3.6965e-01
+
+simlog-20250701_111742
+    i = 1:
+
+    J_aileron: 9.5919e-02
+    J_drum: 2.0000e-03
+    aero_damping: 4.4390e-04
+    aero_stiffness: 5.1676e-03
+    drum_friction: 2.7027e-01
+    link_damping: 4.3759e+00
+    link_stiffness: 3.2982e+01
+    torque_gain: 6.7585e-01
+
+    after fix:
+        J_drum: 1.8829e-03
+        drum_friction: 3.2097e-01
+
+simlog-20260218_130000
+    i = 2:
+
+    J_aileron: 7.6419e-02
+    J_drum: 1.4682e-02
+    aero_damping: 5.3676e-04
+    aero_stiffness: 5.6545e-03
+    drum_friction: 1.0041e-03
+    link_damping: 3.5539e+00
+    link_stiffness: 3.3371e+01
+    torque_gain: 6.3157e-01
+
+    after fix:
+        J_drum: 1.8176e-03
+        drum_friction: 3.8459e-01
