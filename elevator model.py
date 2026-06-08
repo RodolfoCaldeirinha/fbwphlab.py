@@ -91,9 +91,8 @@ print("u0_fit =", input_command[0], q[0], alpha[0])
 # ============================================
 fixed = True
 delay = False
-detrended = True
-test = True
 window = True
+detrended = True
 verify = True
 start_idx_eval = 0
 end_idx_eval = 104000
@@ -262,9 +261,9 @@ else:
 
 
 
-if detrended:
-    ys_sub[0, :] -= ys_sub[0, 0]
-    ys_sub[1, :] -= ys_sub[1, 0]
+
+ys_sub[0, :] -= ys_sub[0, 0]
+ys_sub[1, :] -= ys_sub[1, 0]
 
 
 n_trim = 200  # or 100-300 samples before the event
@@ -295,10 +294,8 @@ else:
 
 data_sub = arc.sysid.Timeseries(ts=time_sub, us=us_sub, ys=ys_sub)
 
-if detrended:
-    x0_guess = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
-else:
-    x0_guess = np.array([theta_d0, 0.0, theta_a0, 0.0], dtype=float)
+x0_guess = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+
                           
 
 
@@ -443,116 +440,69 @@ print("Simulating with estimated parameters...")
 # A) SIMULATE FIT WINDOW
 # =========================
 
-if test:
-    n_steps_sub = us_sub.shape[1]
-    states_sim_sub = np.zeros((4, n_steps_sub))
-    outputs_sim_sub = np.zeros((2, n_steps_sub))
 
-    x_sim_sub = x0_guess.copy()
-    states_sim_sub[:, 0] = x_sim_sub
-    outputs_sim_sub[:, 0] = measure_positions(time_sub[0], x_sim_sub, us_sub[:, 0], result.p)
+n_steps_sub = us_sub.shape[1]
+states_sim_sub = np.zeros((4, n_steps_sub))
+outputs_sim_sub = np.zeros((2, n_steps_sub))
 
-    for k in range(1, n_steps_sub):
-        t_cur = time_sub[k-1]
-        x_sim_sub = dyn_discrete(t_cur, x_sim_sub, us_sub[:, k-1], result.p)
-        states_sim_sub[:, k] = x_sim_sub
-        outputs_sim_sub[:, k] = measure_positions(time_sub[k], x_sim_sub, us_sub[:, k], result.p)
+x_sim_sub = x0_guess.copy()
+states_sim_sub[:, 0] = x_sim_sub
+outputs_sim_sub[:, 0] = measure_positions(time_sub[0], x_sim_sub, us_sub[:, 0], result.p)
 
-    print(f"Fit-window simulation complete for {n_steps_sub} time steps")
+for k in range(1, n_steps_sub):
+    t_cur = time_sub[k-1]
+    x_sim_sub = dyn_discrete(t_cur, x_sim_sub, us_sub[:, k-1], result.p)
+    states_sim_sub[:, k] = x_sim_sub
+    outputs_sim_sub[:, k] = measure_positions(time_sub[k], x_sim_sub, us_sub[:, k], result.p)
 
-# =========================
-# B) OPTIONAL: SIMULATE FULL DATA
-# =========================
+print(f"Fit-window simulation complete for {n_steps_sub} time steps")
 
-if not test:
-    n_steps = us.shape[1]
-    states_sim = np.zeros((4, n_steps))
-    outputs_sim = np.zeros((2, n_steps))
-
-    x0_full = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
-
-    x_sim = x0_full.copy()
-    states_sim[:, 0] = x_sim
-    outputs_sim[:, 0] = measure_positions(time_seconds[0], x_sim, us[:, 0], result.p)
-
-    for k in range(1, n_steps):
-        t_cur = time_seconds[k-1]
-        x_sim = dyn_discrete(t_cur, x_sim, us[:, k-1], result.p)
-        states_sim[:, k] = x_sim
-        outputs_sim[:, k] = measure_positions(time_seconds[k], x_sim, us[:, k], result.p)
-
-    print(f"Full simulation complete for {n_steps} time steps")
 
 # ============================================
 # 10. PLOT COMPARISON
 # ============================================
 
 
-if test:
-    # Plot the FIT WINDOW when testing
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
+# Plot the FIT WINDOW when testing
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
 
-    ax1.plot(time_sub, ys_sub[0], 'b-', label='Measured drum (fit window)')
-    ax1.plot(time_sub, outputs_sim_sub[0], 'r--', label='Simulated drum')
-    ax1.set_ylabel('Drum position (rad)')
-    ax1.legend()
-    ax1.grid(True)
+ax1.plot(time_sub, ys_sub[0], 'b-', label='Measured drum (fit window)')
+ax1.plot(time_sub, outputs_sim_sub[0], 'r--', label='Simulated drum')
+ax1.set_ylabel('Drum position (rad)')
+ax1.legend()
+ax1.grid(True)
 
-    ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured elevator (fit window)')
-    ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated elevator')
-    ax2.set_ylabel('Elevator position (rad)')
-    ax2.set_xlabel('Time (s)')
-    ax2.legend()
-    ax2.grid(True)
+ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured elevator (fit window)')
+ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated elevator')
+ax2.set_ylabel('Elevator position (rad)')
+ax2.set_xlabel('Time (s)')
+ax2.legend()
+ax2.grid(True)
 
-    plt.show()
+plt.show()
 
-else:
-    # Plot the FULL DATA only when not in test mode
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
 
-    ax1.plot(time_seconds, delta_drum, 'b-', label='Measured drum')
-    ax1.plot(time_seconds, outputs_sim[0], 'r--', label='Simulated drum')
-    ax1.set_ylabel('Drum position (rad)')
-    ax1.legend()
-    ax1.grid(True)
-
-    ax2.plot(time_seconds, delta_aileron, 'b-', label='Measured elevator')
-    ax2.plot(time_seconds, outputs_sim[1], 'r--', label='Simulated elevator')
-    ax2.set_ylabel('Elevator position (rad)')
-    ax2.set_xlabel('Time (s)')
-    ax2.legend()
-    ax2.grid(True)
-
-    plt.show()
 
 
 # Fit metrics
-
-if test:
-    fit_drum = 100 * (
-        1 - np.linalg.norm(ys_sub[0] - outputs_sim_sub[0]) /
-        np.linalg.norm(ys_sub[0] - np.mean(ys_sub[0]))
-    )
-    fit_ail = 100 * (
-        1 - np.linalg.norm(ys_sub[1] - outputs_sim_sub[1]) /
-        np.linalg.norm(ys_sub[1] - np.mean(ys_sub[1]))
-    )
-else:
-    fit_drum = 100 * (
-        1 - np.linalg.norm(delta_drum - outputs_sim[0]) /
-        np.linalg.norm(delta_drum - np.mean(delta_drum))
-    )
-    fit_ail = 100 * (
-        1 - np.linalg.norm(delta_aileron - outputs_sim[1]) /
-        np.linalg.norm(delta_aileron - np.mean(delta_aileron))
-    )
+fit_drum = 100 * (
+    1 - np.linalg.norm(ys_sub[0] - outputs_sim_sub[0]) /
+    np.linalg.norm(ys_sub[0] - np.mean(ys_sub[0]))
+)
+fit_ail = 100 * (
+    1 - np.linalg.norm(ys_sub[1] - outputs_sim_sub[1]) /
+    np.linalg.norm(ys_sub[1] - np.mean(ys_sub[1]))
+)
 
 
 
 print(f"\nFit for drum: {fit_drum:.1f}%")
 print(f"Fit for aileron: {fit_ail:.1f}%")
 
+
+#------------------------------------------------
+# 11. SIMULATE FULL DATASET WITH ESTIMATED PARAMS
+#------------------------------------------------
 
 
 
@@ -676,34 +626,6 @@ def evaluate_params_on_full_dataset(params, start_idx, end_idx, detrended, x0_ev
         ax4.grid(True)
 
         plt.show()
-
-        '''
-        e_drum = ys_full_detr[0] - outputs_full_detr[0]
-
-        plt.figure(figsize=(10,4))
-        plt.plot(time_eval, e_drum)
-        plt.grid(True)
-        plt.ylabel("Drum error (rad)")
-        plt.xlabel("Time (s)")
-        plt.title("Detrended drum error")
-        plt.show()
-
-        print("Mean drum error:", np.mean(e_drum))
-        print("RMS drum error:", np.sqrt(np.mean(e_drum**2)))
-
-        e_drum = ys_full_detr[0] - outputs_full_detr[0]
-        drum_offset_corr = np.mean(e_drum)
-
-        outputs_full_detr_corr = outputs_full_detr.copy()
-        outputs_full_detr_corr[0] += drum_offset_corr
-
-        fit_drum_detr_corr = fit_percent(ys_full_detr[0], outputs_full_detr_corr[0])2
-
-
-        print("Corrected detrended drum fit:", fit_drum_detr_corr)
-        print("Applied drum offset correction:", drum_offset_corr)
-
-        '''
 
     return {
         'x0_full': x0_full,

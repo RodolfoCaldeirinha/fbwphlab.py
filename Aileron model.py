@@ -211,9 +211,9 @@ input_sub = input_command[start_idx:start_idx + N_sub]
 alpha_sub = alpha[start_idx:start_idx + N_sub]
 
 
-if detrended:
-    ys_sub[0, :] -= ys_sub[0, 0]
-    ys_sub[1, :] -= ys_sub[1, 0]
+
+ys_sub[0, :] -= ys_sub[0, 0]
+ys_sub[1, :] -= ys_sub[1, 0]
 
 input_sub = input_sub - input_sub[0]
 
@@ -343,117 +343,66 @@ print("Simulating with estimated parameters...")
 # A) SIMULATE FIT WINDOW
 # =========================
 
-if test:
-    n_steps_sub = us_sub.shape[1]
-    states_sim_sub = np.zeros((4, n_steps_sub))
-    outputs_sim_sub = np.zeros((2, n_steps_sub))
 
-    x_sim_sub = x0_guess.copy()
-    states_sim_sub[:, 0] = x_sim_sub
-    outputs_sim_sub[:, 0] = measure_positions(time_sub[0], x_sim_sub, us_sub[:, 0], result.p)
+n_steps_sub = us_sub.shape[1]
+states_sim_sub = np.zeros((4, n_steps_sub))
+outputs_sim_sub = np.zeros((2, n_steps_sub))
 
-    for k in range(1, n_steps_sub):
-        t_cur = time_sub[k-1]
-        x_sim_sub = dyn_discrete(t_cur, x_sim_sub, us_sub[:, k-1], result.p)
-        states_sim_sub[:, k] = x_sim_sub
-        outputs_sim_sub[:, k] = measure_positions(time_sub[k], x_sim_sub, us_sub[:, k], result.p)
+x_sim_sub = x0_guess.copy()
+states_sim_sub[:, 0] = x_sim_sub
+outputs_sim_sub[:, 0] = measure_positions(time_sub[0], x_sim_sub, us_sub[:, 0], result.p)
 
-    print(f"Fit-window simulation complete for {n_steps_sub} time steps")
+for k in range(1, n_steps_sub):
+    t_cur = time_sub[k-1]
+    x_sim_sub = dyn_discrete(t_cur, x_sim_sub, us_sub[:, k-1], result.p)
+    states_sim_sub[:, k] = x_sim_sub
+    outputs_sim_sub[:, k] = measure_positions(time_sub[k], x_sim_sub, us_sub[:, k], result.p)
 
-# =========================
-# B) OPTIONAL: SIMULATE FULL DATA
-# =========================
+print(f"Fit-window simulation complete for {n_steps_sub} time steps")
 
-if not test:
-    n_steps = us.shape[1]
-    states_sim = np.zeros((4, n_steps))
-    outputs_sim = np.zeros((2, n_steps))
-
-    x0_full = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
-
-    x_sim = x0_full.copy()
-    states_sim[:, 0] = x_sim
-    outputs_sim[:, 0] = measure_positions(time_seconds[0], x_sim, us[:, 0], result.p)
-
-    for k in range(1, n_steps):
-        t_cur = time_seconds[k-1]
-        x_sim = dyn_discrete(t_cur, x_sim, us[:, k-1], result.p)
-        states_sim[:, k] = x_sim
-        outputs_sim[:, k] = measure_positions(time_seconds[k], x_sim, us[:, k], result.p)
-
-    print(f"Full simulation complete for {n_steps} time steps")
 
 # ============================================
 # 10. PLOT COMPARISON
 # ============================================
 
 
-if test:
-    # Plot the FIT WINDOW when testing
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
 
-    ax1.plot(time_sub, ys_sub[0], 'b-', label='Measured drum (fit window)')
-    ax1.plot(time_sub, outputs_sim_sub[0], 'r--', label='Simulated drum')
-    ax1.set_ylabel('Drum position (rad)')
-    ax1.legend()
-    ax1.grid(True)
+# Plot the FIT WINDOW when testing
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
 
-    ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured aileron (fit window)')
-    ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated aileron')
-    ax2.set_ylabel('Aileron position (rad)')
-    ax2.set_xlabel('Time (s)')
-    ax2.legend()
-    ax2.grid(True)
+ax1.plot(time_sub, ys_sub[0], 'b-', label='Measured drum (fit window)')
+ax1.plot(time_sub, outputs_sim_sub[0], 'r--', label='Simulated drum')
+ax1.set_ylabel('Drum position (rad)')
+ax1.legend()
+ax1.grid(True)
 
-    plt.show()
+ax2.plot(time_sub, ys_sub[1], 'b-', label='Measured aileron (fit window)')
+ax2.plot(time_sub, outputs_sim_sub[1], 'r--', label='Simulated aileron')
+ax2.set_ylabel('Aileron position (rad)')
+ax2.set_xlabel('Time (s)')
+ax2.legend()
+ax2.grid(True)
 
-else:
-    # Plot the FULL DATA only when not in test mode
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 6))
-
-    ax1.plot(time_seconds, delta_drum, 'b-', label='Measured drum')
-    ax1.plot(time_seconds, outputs_sim[0], 'r--', label='Simulated drum')
-    ax1.set_ylabel('Drum position (rad)')
-    ax1.legend()
-    ax1.grid(True)
-
-    ax2.plot(time_seconds, delta_aileron, 'b-', label='Measured aileron')
-    ax2.plot(time_seconds, outputs_sim[1], 'r--', label='Simulated aileron')
-    ax2.set_ylabel('Aileron position (rad)')
-    ax2.set_xlabel('Time (s)')
-    ax2.legend()
-    ax2.grid(True)
-
-    plt.show()
-
+plt.show()
 
 # Fit metrics
 
-if test:
-    fit_drum = 100 * (
-        1 - np.linalg.norm(ys_sub[0] - outputs_sim_sub[0]) /
-        np.linalg.norm(ys_sub[0] - np.mean(ys_sub[0]))
-    )
-    fit_ail = 100 * (
-        1 - np.linalg.norm(ys_sub[1] - outputs_sim_sub[1]) /
-        np.linalg.norm(ys_sub[1] - np.mean(ys_sub[1]))
-    )
-else:
-    fit_drum = 100 * (
-        1 - np.linalg.norm(delta_drum - outputs_sim[0]) /
-        np.linalg.norm(delta_drum - np.mean(delta_drum))
-    )
-    fit_ail = 100 * (
-        1 - np.linalg.norm(delta_aileron - outputs_sim[1]) /
-        np.linalg.norm(delta_aileron - np.mean(delta_aileron))
-    )
 
-
+fit_drum = 100 * (
+    1 - np.linalg.norm(ys_sub[0] - outputs_sim_sub[0]) /
+    np.linalg.norm(ys_sub[0] - np.mean(ys_sub[0]))
+)
+fit_ail = 100 * (
+    1 - np.linalg.norm(ys_sub[1] - outputs_sim_sub[1]) /
+    np.linalg.norm(ys_sub[1] - np.mean(ys_sub[1]))
+)
 
 print(f"\nFit for drum: {fit_drum:.1f}%")
 print(f"Fit for aileron: {fit_ail:.1f}%")
 
-
+#-------------------------------------------------
+# 11. SIMULATE FULL DATASET WITH ESTIMATED PARAMS
+#-------------------------------------------------
 
 
 def simulate_dataset(params, time_vec, u_mat, x0, start_idx, end_idx):
